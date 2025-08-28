@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Esquadrias - Linha Suprema</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .result-card {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+        }
+        .result-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .calculator-section {
+            display: none;
+        }
+        .calculator-section.active {
+            display: block;
+        }
+        .nav-button.active {
+            background-color: #2563eb;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-6 md:p-8">
+        
+        <div class="text-center mb-6">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Calculadora de Esquadrias</h1>
+            <p class="text-gray-500 mt-1">Linha Suprema</p>
+        </div>
+
+        <!-- Navegação -->
+        <div class="flex justify-center gap-2 mb-8 bg-gray-100 p-1 rounded-lg">
+            <button id="nav-fixo" class="nav-button w-full py-2 px-4 rounded-md font-semibold text-gray-600 transition-colors duration-300">Fixo de 1 Folha</button>
+            <button id="nav-correr" class="nav-button w-full py-2 px-4 rounded-md font-semibold text-gray-600 transition-colors duration-300">Janela de Correr 2 Folhas</button>
+        </div>
+
+        <!-- Seção Calculadora Fixo 1 Folha -->
+        <div id="calc-fixo" class="calculator-section">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label for="largura-fixo" class="block text-sm font-medium text-gray-700 mb-1">Largura do Vão (L) em mm</label>
+                    <input type="number" id="largura-fixo" placeholder="Ex: 1000" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="altura-fixo" class="block text-sm font-medium text-gray-700 mb-1">Altura do Vão (H) em mm</label>
+                    <input type="number" id="altura-fixo" placeholder="Ex: 1000" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+            <div class="text-center mb-8">
+                <button id="calculate-btn-fixo" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-transform transform hover:scale-105 shadow-md">
+                    Calcular Cortes
+                </button>
+            </div>
+            <div id="results-container-fixo" class="space-y-4"></div>
+        </div>
+
+        <!-- Seção Calculadora Janela de Correr 2 Folhas -->
+        <div id="calc-correr" class="calculator-section">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label for="largura-correr" class="block text-sm font-medium text-gray-700 mb-1">Largura do Vão (L) em mm</label>
+                    <input type="number" id="largura-correr" placeholder="Ex: 1200" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="altura-correr" class="block text-sm font-medium text-gray-700 mb-1">Altura do Vão (H) em mm</label>
+                    <input type="number" id="altura-correr" placeholder="Ex: 1000" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+            <div class="text-center mb-8">
+                <button id="calculate-btn-correr" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition-transform transform hover:scale-105 shadow-md">
+                    Calcular Cortes
+                </button>
+            </div>
+            <div id="results-container-correr" class="space-y-4"></div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Lógica de Navegação ---
+            const navFixo = document.getElementById('nav-fixo');
+            const navCorrer = document.getElementById('nav-correr');
+            const calcFixo = document.getElementById('calc-fixo');
+            const calcCorrer = document.getElementById('calc-correr');
+
+            function showCalculator(calcToShow) {
+                [calcFixo, calcCorrer].forEach(calc => calc.classList.remove('active'));
+                [navFixo, navCorrer].forEach(nav => nav.classList.remove('active'));
+
+                if (calcToShow === 'fixo') {
+                    calcFixo.classList.add('active');
+                    navFixo.classList.add('active');
+                } else {
+                    calcCorrer.classList.add('active');
+                    navCorrer.classList.add('active');
+                }
+            }
+
+            navFixo.addEventListener('click', () => showCalculator('fixo'));
+            navCorrer.addEventListener('click', () => showCalculator('correr'));
+            
+            // Inicia mostrando a primeira calculadora
+            showCalculator('fixo');
+
+            // --- Lógica da Calculadora Genérica ---
+            function renderResults(container, results) {
+                container.innerHTML = '';
+                results.forEach((result, index) => {
+                    let itemsHtml = '';
+                    result.items.forEach(item => {
+                        itemsHtml += `
+                            <div class="flex justify-between items-center py-2 border-b border-gray-200 last:border-b-0">
+                                <div class="text-sm">
+                                    <p class="font-semibold text-gray-700">${item.qty}x ${item.label}</p>
+                                    <p class="text-xs text-gray-500">Fórmula: ${item.formula}</p>
+                                </div>
+                                <p class="text-lg font-bold text-gray-800">${item.result}</p>
+                            </div>
+                        `;
+                    });
+
+                    const card = document.createElement('div');
+                    card.className = 'result-card bg-gray-50 p-4 rounded-lg border border-gray-200';
+                    card.innerHTML = `
+                        <div class="flex items-center mb-3">
+                            ${result.icon}
+                            <h3 class="ml-3 font-bold text-lg text-gray-800">${result.title}</h3>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-4">${result.explanation}</p>
+                        <div class="space-y-2">${itemsHtml}</div>
+                    `;
+                    container.appendChild(card);
+                    setTimeout(() => card.classList.add('visible'), index * 150);
+                });
+            }
+
+            // --- Calculadora Fixo 1 Folha ---
+            const btnFixo = document.getElementById('calculate-btn-fixo');
+            btnFixo.addEventListener('click', () => {
+                const L = parseFloat(document.getElementById('largura-fixo').value);
+                const H = parseFloat(document.getElementById('altura-fixo').value);
+                const container = document.getElementById('results-container-fixo');
+
+                if (isNaN(L) || isNaN(H) || L <= 0 || H <= 0) {
+                    container.innerHTML = `<div class="text-center text-red-500 font-medium">Por favor, insira valores válidos.</div>`;
+                    return;
+                }
+                
+                const marcoH_corte = L - 5;
+                const marcoV_corte = H - 4;
+                const bagueteH_corte = L - 5 - 40;
+                const bagueteV_corte = H - 4 - 70;
+                const vidroL_corte = bagueteH_corte - 5;
+                const vidroH_corte = bagueteV_corte + 23;
+
+                const results = [
+                    { title: 'Marco Fixo (Ex: SU-079)', icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 1v4m0 0h-4m4 0l-5-5" /></svg>`, explanation: 'Estrutura externa que vai na parede, com cortes em 45º.', items: [ { label: 'Horizontal', qty: 2, formula: `${L}mm (L) - 5mm`, result: `${marcoH_corte}mm` }, { label: 'Vertical', qty: 2, formula: `${H}mm (H) - 4mm`, result: `${marcoV_corte}mm` } ] },
+                    { title: 'Baguete (Ex: SU-103)', icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`, explanation: 'Perfil interno que trava o vidro, com cortes em 90º (retos).', items: [ { label: 'Horizontal', qty: 2, formula: `${L}mm - 5mm - 40mm`, result: `${bagueteH_corte}mm` }, { label: 'Vertical', qty: 2, formula: `${H}mm - 4mm - 70mm`, result: `${bagueteV_corte}mm` } ] },
+                    { title: 'Vidro', icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`, explanation: 'Cálculo da folha de vidro com folgas para os calços.', items: [ { label: 'Largura', qty: 1, formula: `${bagueteH_corte}mm - 5mm`, result: `${vidroL_corte}mm` }, { label: 'Altura', qty: 1, formula: `${bagueteV_corte}mm + 23mm`, result: `${vidroH_corte}mm` } ] }
+                ];
+                renderResults(container, results);
+            });
+
+            // --- Calculadora Janela de Correr 2 Folhas ---
+            const btnCorrer = document.getElementById('calculate-btn-correr');
+            btnCorrer.addEventListener('click', () => {
+                const L = parseFloat(document.getElementById('largura-correr').value);
+                const H = parseFloat(document.getElementById('altura-correr').value);
+                const container = document.getElementById('results-container-correr');
+                
+                if (isNaN(L) || isNaN(H) || L <= 0 || H <= 0) {
+                    container.innerHTML = `<div class="text-center text-red-500 font-medium">Por favor, insira valores válidos.</div>`;
+                    return;
+                }
+
+                // Folgas (descontos) para Linha Suprema - Janela 2 Folhas (Exemplos)
+                const folgaAlturaFolha = 43; // Desconto total para a folha na altura
+                const folgaLarguraFolha = 5; // Desconto total para as folhas na largura
+                const transpasse = 25; // Sobreposição das folhas no meio
+
+                // Cálculos
+                const marcoTrilho_corte = L;
+                const marcoLateral_corte = H;
+                const folhaMontante_corte = H - folgaAlturaFolha;
+                const folhaTravessa_corte = ((L - folgaLarguraFolha) / 2) + transpasse;
+                const vidroL_corte = folhaTravessa_corte - 60; // Exemplo de desconto para o vidro
+                const vidroH_corte = folhaMontante_corte - 60; // Exemplo de desconto para o vidro
+
+                const results = [
+                    { title: 'Marco (Quadro Fixo)', icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 1v4m0 0h-4m4 0l-5-5" /></svg>`, explanation: 'Estrutura externa com cortes em 90º.', items: [ { label: 'Trilho (Ex: SU-043)', qty: 2, formula: `Largura Total (L)`, result: `${marcoTrilho_corte.toFixed(1)}mm` }, { label: 'Lateral (Ex: SU-042)', qty: 2, formula: `Altura Total (H)`, result: `${marcoLateral_corte.toFixed(1)}mm` } ] },
+                    { title: 'Folhas (Partes Móveis)', icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h.01M12 7h.01M16 7h.01M21 12c0 4.418-4.03 8-9 8S3 16.418 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>`, explanation: 'Estrutura das folhas que correm, com cortes em 45º.', items: [ { label: 'Travessa (Ex: SU-078)', qty: 4, formula: `((L - ${folgaLarguraFolha}) / 2) + ${transpasse}`, result: `${folhaTravessa_corte.toFixed(1)}mm` }, { label: 'Montante (Ex: SU-079)', qty: 4, formula: `H - ${folgaAlturaFolha}mm`, result: `${folhaMontante_corte.toFixed(1)}mm` } ] },
+                    { title: 'Vidro', icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`, explanation: 'Cálculo das 2 folhas de vidro com as folgas.', items: [ { label: 'Largura', qty: 2, formula: `Travessa - 60mm`, result: `${vidroL_corte.toFixed(1)}mm` }, { label: 'Altura', qty: 2, formula: `Montante - 60mm`, result: `${vidroH_corte.toFixed(1)}mm` } ] }
+                ];
+                renderResults(container, results);
+            });
+        });
+    </script>
+</body>
+</html>
